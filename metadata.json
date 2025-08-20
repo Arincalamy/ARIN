@@ -1,0 +1,5 @@
+{
+  "name": "Team Water: The Wave of Change",
+  "description": "A web application for a water charity campaign, inspired by #TeamTrees. It allows users to donate, track the collective goal of 'years of water supplied', and view a leaderboard of top contributors. The app uses the Gemini API to generate inspiring facts and thank you messages.",
+  "requestFramePermissions": []
+}
