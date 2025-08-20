@@ -10,14 +10,25 @@ if (!API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: API_KEY! });
 
+const FACT_CACHE_KEY = 'teamwater_fact_cache';
+const FACT_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+interface FactCache {
+  fact: string;
+  timestamp: number;
+}
+
 export const getWaterFact = async (): Promise<string> => {
   try {
-    const cachedFact = window.sessionStorage.getItem('teamwater_fact');
-    if (cachedFact) {
-      return cachedFact;
+    const cachedItem = window.localStorage.getItem(FACT_CACHE_KEY);
+    if (cachedItem) {
+      const { fact, timestamp }: FactCache = JSON.parse(cachedItem);
+      if (Date.now() - timestamp < FACT_CACHE_DURATION) {
+        return fact;
+      }
     }
   } catch (error) {
-    console.error("Error reading fact from sessionStorage:", error);
+    console.error("Error reading fact from localStorage:", error);
   }
 
   try {
@@ -27,14 +38,26 @@ export const getWaterFact = async (): Promise<string> => {
     });
     const fact = response.text.trim();
     try {
-      window.sessionStorage.setItem('teamwater_fact', fact);
+      const newCacheItem: FactCache = {
+        fact,
+        timestamp: Date.now(),
+      };
+      window.localStorage.setItem(FACT_CACHE_KEY, JSON.stringify(newCacheItem));
     } catch (error) {
-      console.error("Error saving fact to sessionStorage:", error);
+      console.error("Error saving fact to localStorage:", error);
     }
     return fact;
   } catch (error) {
     console.error("Error fetching water fact from Gemini:", error);
-    return "Every $1 donated provides one person with clean water for a year. Your contribution makes a world of difference.";
+    const fallbackFacts = [
+        "Over 771 million people around the world lack basic access to clean and safe drinking water.",
+        "Women and girls collectively spend an estimated 200 million hours carrying water every single day.",
+        "Access to clean water is a key factor in reducing disease and improving educational outcomes for children.",
+        "Every $1 invested in water and sanitation provides an average economic return of $4.",
+        "Just a single dollar can often provide someone with clean water for an entire year."
+    ];
+    const randomIndex = Math.floor(Math.random() * fallbackFacts.length);
+    return fallbackFacts[randomIndex];
   }
 };
 
